@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Generator</title>
+  <style>
+    body {
+      background-color: #222;
+      color: white;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      padding: 40px;
+      background-color: #333;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slide-up 0.5s ease;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    @keyframes slide-up {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: #FF3838;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 0 auto;
+      margin-bottom: 20px;
+      background-color: #525252;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      box-sizing: border-box;
+      transition: opacity 0.3s ease;
+      opacity: 1;
+    }
+
+    .password-input-hidden {
+      opacity: 0;
+      pointer-events: none;
+      height: 0;
+      padding: 0;
+      margin-bottom: 0;
+      border: #222
+    }
+
+    #qrCodeImage {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .generate-button {
+      padding: 10px 20px;
+      background-color: #FF3838;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: -5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .generate-button:hover {
+      background-color: #D62828;
+    }
+
+    .radio-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      margin-right: 20px;
+      vertical-align: middle;
+    }
+
+    .radio-group input[type="radio"] {
+      opacity: 0;
+      position: absolute;
+    }
+
+    .radio-group .radio-button {
+      display: inline-block;
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      border-radius: 50%;
+      background-color: #525252;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: -2px;
+    }
+
+    .radio-group .radio-button:hover {
+      background-color: #444;
+    }
+
+    .radio-group input[type="radio"]:checked+.radio-button {
+      background-color: #FF3838;
+    }
+
+    @keyframes password-input-appear {
+      0% {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin-bottom: 0;
+      }
+
+      100% {
+        opacity: 1;
+        height: auto;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+    }
+
+    @keyframes password-input-disappear {
+      0% {
+        opacity: 1;
+        height: auto;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+
+      100% {
+        opacity: 0;
+        height: 0;
+        padding: 0;
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>QR Code Generator</h1>
+    <input type="text" id="textInput" placeholder="Enter the content for the QR code">
+    <input type="password" id="passwordInput" placeholder="Enter the password for encryption/decryption" class="">
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="encryptionOption" value="encrypted" checked>
+        <span class="radio-button"></span>
+        Encrypted
+      </label>
+      <label>
+        <input type="radio" name="encryptionOption" value="not-encrypted">
+        <span class="radio-button"></span>
+        Not Encrypted
+      </label>
+    </div>
+    <button class="generate-button" onclick="generateQRCode()">Generate QR Code</button>
+    <div id="qrCodeImage"></div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <script>
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    const textInput = document.getElementById('textInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const encryptionOption = document.getElementsByName('encryptionOption');
+    const encryptionOptionContainer = document.querySelector('.radio-group');
+
+    encryptionOption.forEach((option) => {
+      option.addEventListener('change', handleEncryptionOptionChange);
+    });
+
+    function handleEncryptionOptionChange() {
+      const selectedOption = document.querySelector('input[name="encryptionOption"]:checked').value;
+      if (selectedOption === 'encrypted') {
+        showPasswordInput();
+      } else {
+        hidePasswordInput();
+      }
+    }
+
+    function showPasswordInput() {
+      passwordInput.style.display = 'block';
+      passwordInput.classList.remove('password-input-hidden');
+      passwordInput.style.animation = 'password-input-appear 0.3s forwards';
+      encryptionOptionContainer.style.marginBottom = '20px';
+      encryptionOptionContainer.style.opacity = '1';
+    }
+
+    function hidePasswordInput() {
+      passwordInput.classList.add('password-input-hidden');
+      passwordInput.style.animation = 'password-input-disappear 0.3s forwards';
+      setTimeout(() => {
+        passwordInput.style.display = 'none';
+        encryptionOptionContainer.style.marginBottom = '-2';
+      }, 300);
+    }
+
+    function generateQRCode() {
+      qrCodeImage.innerHTML = '';
+      const text = textInput.value;
+      const password = passwordInput.value;
+      const isEncrypted = document.querySelector('input[name="encryptionOption"]:checked').value === 'encrypted';
+
+      if (password !== '' && isEncrypted) {
+        finalText = encryptDecryptText(text, password);
+        const qrcode = new QRCode(qrCodeImage, {
+          text: finalText,
+          width: 200,
+          height: 200,
+          correctLevel: QRCode.CorrectLevel.H,
+          radius: 10,
+        });
+      }
+      else if (text !== '' && !isEncrypted) {
+        let finalText = text;
+        const qrcode = new QRCode(qrCodeImage, {
+          text: finalText,
+          width: 200,
+          height: 200,
+          correctLevel: QRCode.CorrectLevel.H,
+          radius: 10,
+        });
+      }
+    }
+    function encryptDecryptText(text, key) {
+      let result = '';
+
+      for (let i = 0; i < text.length; i++) {
+        let charCode = text.charCodeAt(i);
+        let keyChar = key.charCodeAt(i % key.length);
+        let encryptedCharCode = charCode ^ keyChar;
+        result += String.fromCharCode(encryptedCharCode);
+      }
+
+      return result;
+    }
+  </script>
+</body>
+
+</html>
